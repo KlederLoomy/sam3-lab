@@ -1,0 +1,41 @@
+# SAM3 Lab - Configuração
+
+# Stream RTSP
+rtsp:
+  url: "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4"  # Stream de teste
+  fps_target: 1  # Frames por segundo a processar (1 = economia de recursos)
+  reconnect_attempts: 5
+  reconnect_delay: 5  # segundos
+
+# Webhook
+webhook:
+  url: "https://hook.us1.make.com/miyytagdrn6qhkhydykfq9ggrra1uvrd"  # Substitua pelo seu webhook
+  timeout: 10
+  retry_attempts: 3
+  retry_delay: 2
+
+# Detector: Pessoa Dormindo
+sleeping_detector:
+  enabled: true
+  confidence_threshold: 0.3
+  persistence_seconds: 10
+  check_interval_seconds: 2
+
+# Detector: Criança na Piscina (TODO)
+pool_child_detector:
+  enabled: false
+  confidence_threshold: 0.4
+  persistence_seconds: 5
+  check_interval_seconds: 1
+
+# Logs
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  save_to_file: true
+  log_dir: "/workspace/sam3-lab/logs"
+  
+# Performance
+performance:
+  max_gpu_memory_gb: 20  # Limite de memória GPU
+  enable_metrics: true
+  metrics_interval: 30  # segundos
