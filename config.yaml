@@ -2,7 +2,7 @@
 
 # Stream RTSP
 rtsp:
-  url: "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4"  # Stream de teste
+  url: "rtsp://admin:t86kxyJQN7WYr3W@201.16.120.51:555/Streaming/Channels/101"  # Stream de teste
   fps_target: 1  # Frames por segundo a processar (1 = economia de recursos)
   reconnect_attempts: 5
   reconnect_delay: 5  # segundos

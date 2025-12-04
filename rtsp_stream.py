@@ -90,8 +90,8 @@ class RTSPStream:
 
 # Exemplo de uso
 if __name__ == "__main__":
-    # Stream de teste público
-    test_url = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4"
+    # URL da câmera Hikvision DS-2CD1023G2-LIU
+    test_url = "rtsp://admin:t86kxyJQN7WYr3W@201.16.120.51:555/Streaming/Channels/101"
     
     def process_frame(frame, timestamp):
         print(f"Frame capturado em {timestamp.strftime('%H:%M:%S')} - Shape: {frame.shape}")

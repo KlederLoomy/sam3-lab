@@ -92,6 +92,14 @@ class SleepingDetector:
                 scores = output.get("scores", [])
                 boxes = output.get("boxes", [])
                 
+                print(f"      🔍 Prompt: '{prompt}'")
+                print(f"      📊 Masks: {len(masks)}, Scores: {len(scores)}, Boxes: {len(boxes)}")
+                
+                if len(scores) > 0:
+                    print(f"      🎯 Scores encontrados:")
+                    for idx, sc in enumerate(scores[:5]):  # Mostrar até 5
+                        print(f"         [{idx}] Score: {sc:.4f}")
+                
                 # Verificar se encontrou algo com score aceitável
                 for i, score in enumerate(scores):
                     if score > self.confidence_threshold and score > best_score:
@@ -109,17 +117,16 @@ class SleepingDetector:
                 if best_detection["box"]:
                     orientation = self._analyze_orientation(best_detection["box"])
                     best_detection["orientation"] = orientation
-                    
-                    # Se está horizontal (deitado), adicionar ao histórico
-                    if orientation == "horizontal":
-                        self._add_to_history(best_detection)
-                        
-                        # Verificar se persistiu tempo suficiente
-                        if self._check_persistence(timestamp):
-                            alert = self._create_alert(best_detection, timestamp)
-                            # Cooldown de 30 segundos após alerta
-                            self.alert_cooldown_until = timestamp + timedelta(seconds=30)
-                            return alert
+                
+                # Adicionar ao histórico independente da orientação
+                self._add_to_history(best_detection)
+                
+                # Verificar se persistiu tempo suficiente
+                if self._check_persistence(timestamp):
+                    alert = self._create_alert(best_detection, timestamp)
+                    # Cooldown de 30 segundos após alerta
+                    self.alert_cooldown_until = timestamp + timedelta(seconds=30)
+                    return alert
             
             return None
             
@@ -168,7 +175,7 @@ class SleepingDetector:
         cutoff_time = current_time - timedelta(seconds=self.persistence_seconds)
         recent_detections = [
             d for d in self.detections_history 
-            if d["timestamp"] > cutoff_time and d["orientation"] == "horizontal"
+            if d["timestamp"] > cutoff_time
         ]
         
         # Se tem detecções suficientes no período

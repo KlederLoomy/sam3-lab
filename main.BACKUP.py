@@ -14,7 +14,6 @@ from pathlib import Path
 from rtsp_stream import RTSPStream
 from scenario_sleeping_detector import SleepingDetector
 from webhook_sender import WebhookSender
-from test_pink_detector import PinkDetector
 
 # Flag para shutdown gracioso
 shutdown_requested = False
@@ -68,16 +67,6 @@ def main():
     print("\n🔍 Inicializando detectores...")
     detectors = []
     
-    # TESTE: Usar detector de rosa temporariamente
-    #pink_det = PinkDetector(
-    #    area_threshold=5000,
-    #    persistence_seconds=3,
-    #    check_interval_seconds=1
-    #)
-    #detectors.append(('pink', pink_det))
-    #print("✓ Detector de ROSA ativado (TESTE)")
-    
-    #Sleeping detector desabilitado temporariamente para teste
     if config['sleeping_detector']['enabled']:
         sleeping_det = SleepingDetector(
             sam3_processor=processor,
@@ -124,86 +113,20 @@ def main():
         if shutdown_requested:
             return
         
-        print(f"\n{'='*70}")
-        print(f"⏰ {timestamp.strftime('%H:%M:%S')} - Processando frame...")
-        print(f"   Frame shape: {frame.shape}")
+        print(f"\n⏰ {timestamp.strftime('%H:%M:%S')} - Processando frame...")
         
         # Executar cada detector
         for detector_name, detector in detectors:
             try:
-                print(f"\n🔍 Executando detector: {detector_name}")
-                
-                if detector_name == 'pink':
-                    # Verificar se vai processar este frame
-                    if not detector.should_check_frame(timestamp):
-                        print(f"   ⏭️  Pulando frame (aguardando intervalo)")
-                        continue
-                    
-                    print(f"   🎨 Detectando cor ROSA...")
-                    alert = detector.detect_pink_object(frame, timestamp)
-                    
-                    if alert:
-                        print(f"\n{'='*70}")
-                        print(f"🚨 ALERTA DETECTADO! 🚨")
-                        print(f"{'='*70}")
-                        print(f"   Tipo: {alert['what']}")
-                        print(f"   Confiança: {alert['how']['confidence_score']:.2f}")
-                        print(f"   Área: {alert['where']['area_pixels']:.0f} pixels")
-                        print(f"   Bounding Box: {alert['where']['bounding_box']}")
-                        print(f"{'='*70}")
-                        
-                        # Enviar para webhook
-                        print(f"\n📡 Enviando alerta para webhook...")
-                        success = webhook.send_alert(alert)
-                        
-                        if success:
-                            print(f"✅ Alerta enviado com sucesso!")
-                        else:
-                            print(f"❌ Falha ao enviar alerta")
-                        
-                        # Salvar log local
-                        log_path = Path(config['logging']['log_dir'])
-                        log_path.mkdir(exist_ok=True)
-                        
-                        log_file = log_path / f"alert_{timestamp.strftime('%Y%m%d_%H%M%S')}.json"
-                        import json
-                        with open(log_file, 'w') as f:
-                            json.dump(alert, f, indent=2)
-                        print(f"💾 Log salvo: {log_file}")
-                    else:
-                        print(f"   ℹ️  Nenhum objeto rosa detectado")
-                        print(f"   Histórico: {len(detector.detections_history)} detecções nos últimos 60s")
-                    
-                    continue
-                
                 if detector_name == 'sleeping':
-                    # Verificar se vai processar este frame
-                    if not detector.should_check_frame(timestamp):
-                        print(f"   ⏭️  Pulando frame (aguardando intervalo de {detector.check_interval}s)")
-                        continue
-                    
-                    print(f"   🤖 Processando com SAM3...")
                     alert = detector.detect_sleeping_person(frame, timestamp)
                     
                     if alert:
-                        print(f"\n{'='*70}")
-                        print(f"🚨 ALERTA DETECTADO! 🚨")
-                        print(f"{'='*70}")
-                        print(f"   Tipo: {alert['what']}")
+                        print(f"\n🚨 ALERTA: {alert['what']}")
                         print(f"   Confiança: {alert['how']['confidence_score']:.2f}")
-                        print(f"   Prompt usado: {alert['how']['prompt_used']}")
-                        print(f"   Orientação: {alert['where']['orientation']}")
-                        print(f"   Bounding Box: {alert['where']['bounding_box']}")
-                        print(f"{'='*70}")
                         
                         # Enviar para webhook
-                        print(f"\n📡 Enviando alerta para webhook...")
-                        success = webhook.send_alert(alert)
-                        
-                        if success:
-                            print(f"✅ Alerta enviado com sucesso!")
-                        else:
-                            print(f"❌ Falha ao enviar alerta")
+                        webhook.send_alert(alert)
                         
                         # Salvar log local
                         log_path = Path(config['logging']['log_dir'])
@@ -213,17 +136,10 @@ def main():
                         import json
                         with open(log_file, 'w') as f:
                             json.dump(alert, f, indent=2)
-                        print(f"💾 Log salvo: {log_file}")
-                    else:
-                        print(f"   ℹ️  Nenhuma pessoa dormindo detectada")
-                        print(f"   Histórico: {len(detector.detections_history)} detecções nos últimos 60s")
+                        print(f"   Log salvo: {log_file}")
                 
             except Exception as e:
-                print(f"❌ Erro no detector {detector_name}: {e}")
-                import traceback
-                traceback.print_exc()
-        
-        print(f"{'='*70}\n")
+                print(f"✗ Erro no detector {detector_name}: {e}")
     
     # Iniciar processamento
     print("\n" + "="*70)
