@@ -15,6 +15,7 @@ Avaliar a aplicabilidade do modelo de IA **SAM 3** (Segment Anything Model 3) em
 - **Adulto com Nanismo** - Diferenciação entre criança e adulto com nanismo
 
 ## 🏗️ Arquitetura
+
 ```
 ┌─────────────┐    ┌──────────────┐    ┌─────────────────┐
 │ Câmera IP   │───▶│  RTSP Stream │───▶│  Frame Buffer   │
@@ -43,6 +44,7 @@ Avaliar a aplicabilidade do modelo de IA **SAM 3** (Segment Anything Model 3) em
 ```
 
 ## 📁 Estrutura do Projeto
+
 ```
 /workspace/sam3-lab/
 ├── repo/                              # Código principal
@@ -105,6 +107,7 @@ python webhook_sender.py
 ```
 
 ## 📊 Formato de Alerta (5W2H)
+
 ```json
 {
   "what": "Pessoa dormindo detectada",
@@ -156,12 +159,54 @@ Edite `config.yaml` para ajustar:
 ## 🔍 Status do Projeto
 
 - ✅ Ambiente Runpod configurado
-- ✅ SAM3 instalado
+- ✅ SAM3 instalado e testado
 - ✅ Stream RTSP implementado
 - ✅ Detector "Pessoa Dormindo" implementado
 - ✅ Webhook sender implementado
-- ⏳ Aguardando aprovação HuggingFace para testes
+- ✅ Testes com câmera real Hikvision realizados
+- 🔬 Debug e validação em andamento
 - 🚧 Outros cenários em desenvolvimento
+
+## 🧪 Descobertas Técnicas
+
+### SAM3 Text Prompts - Limitações Identificadas
+
+**Funciona:**
+- ✅ "person" (98.3% confiança)
+- ✅ "man" / "woman" (98%+ confiança)
+- ✅ "chair" (92.5% confiança)
+- ✅ "table", "computer" (alta confiança)
+
+**Não funciona diretamente:**
+- ❌ "sleeping person" (0 resultados)
+- ❌ "person sleeping" (0 resultados)
+- ❌ "person lying down" (0 resultados)
+
+**Motivo:** SAM3 é treinado para **noun phrases simples** (objetos físicos), não para **estados/ações** (sleeping, running, etc). Para prompts complexos que exigem raciocínio, seria necessário o SAM3 Agent (MLLM).
+
+### SAM3 Agent
+
+O SAM3 Agent não é uma classe Python importável, mas sim um **notebook exemplo** (`examples/sam3_agent.ipynb`) que demonstra como usar um MLLM externo (vLLM ou API) para interpretar prompts complexos e chamar o SAM3.
+
+**Complexidade:** Requer configuração de servidor MLLM adicional, o que adiciona overhead significativo.
+
+**Decisão:** Não utilizaremos o Agent inicialmente. A abordagem de detectar "person" + análise temporal é mais simples e adequada.
+
+## 🎯 Estratégia de Detecção Implementada
+
+### Abordagem: Detecção de Pessoa + Persistência Temporal
+
+1. **Detectar "person"** usando SAM3 (funciona com 98%+ confiança)
+2. **Rastrear posição** da pessoa através de bounding boxes
+3. **Calcular IoU** (Intersection over Union) entre detecções consecutivas
+4. **Verificar persistência** - pessoa parada na mesma posição por X segundos
+5. **Gerar alerta** quando critérios são atendidos
+
+**Vantagens:**
+- Usa apenas SAM3 base (sem dependências adicionais)
+- Alta confiança de detecção (98%+)
+- Funciona para pessoa dormindo em qualquer posição (sentada, deitada, etc)
+- Configurável via `config.yaml`
 
 ## 📝 Próximos Passos
 
